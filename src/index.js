@@ -1,7 +1,10 @@
 import cors from 'cors';
 import dotenv from 'dotenv';
 import express from 'express';
+import fs from 'fs';
+import path from 'path';
 import mongoose from 'mongoose';
+import { fileURLToPath } from 'url';
 import { Play } from './models/Play.js';
 import { User } from './models/User.js';
 import { WalletTransaction } from './models/WalletTransaction.js';
@@ -348,6 +351,18 @@ app.get('/api/leaderboard', async (req, res, next) => {
     next(error);
   }
 });
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const clientDistPath = path.resolve(__dirname, '../client/dist');
+const serveClient = fs.existsSync(clientDistPath);
+
+if (serveClient) {
+  app.use(express.static(clientDistPath));
+  app.get('*', (req, res, next) => {
+    if (req.path.startsWith('/api')) return next();
+    res.sendFile(path.join(clientDistPath, 'index.html'));
+  });
+}
 
 app.use((error, _req, res, _next) => {
   console.error(error);
